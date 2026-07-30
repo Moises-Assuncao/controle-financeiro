@@ -1,0 +1,15 @@
+# Segredos — nunca versionar
+.env
+.env.*
+!.env.example
+
+# Arquivo gerado automaticamente no build a partir das variáveis de ambiente
+src/config/firebase-config.js
+
+# Vercel / Node
+.vercel/
+node_modules/
+
+# Sistema
+.DS_Store
+Thumbs.db

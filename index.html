@@ -4,349 +4,100 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fluxo — Controle Financeiro Pessoal</title>
+<meta name="description" content="Controle financeiro pessoal com despesas, contas a pagar, análise de crédito e histórico mensal.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="src/css/styles.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<style>
-:root{
-  --bg:#0c0f14;
-  --surface:#12161e;
-  --surface-2:#181d27;
-  --surface-3:#1f2530;
-  --line:#262c38;
-  --line-soft:#1b202a;
-  --text:#e7ecf3;
-  --text-dim:#8b93a3;
-  --text-faint:#5a6172;
-  --accent:#00e5a0;
-  --accent-dim:#00a878;
-  --accent-glow:rgba(0,229,160,.18);
-  --amber:#ffb020;
-  --red:#ff5c6a;
-  --blue:#4da3ff;
-  --font-display:'Space Grotesk',sans-serif;
-  --font-body:'Inter',sans-serif;
-  --font-mono:'JetBrains Mono',monospace;
-  --radius:10px;
-}
-*{box-sizing:border-box;}
-html,body{margin:0;padding:0;}
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:var(--font-body);
-  -webkit-font-smoothing:antialiased;
-  min-height:100vh;
-}
-body::before{
-  content:"";
-  position:fixed;inset:0;
-  background-image:
-    linear-gradient(var(--line-soft) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
-  background-size:32px 32px;
-  opacity:.35;
-  pointer-events:none;
-  z-index:0;
-}
-h1,h2,h3,h4{font-family:var(--font-display);margin:0;letter-spacing:.2px;}
-.mono{font-family:var(--font-mono);}
-button{font-family:var(--font-body);cursor:pointer;}
-input,select,textarea{font-family:var(--font-body);}
-::-webkit-scrollbar{width:8px;height:8px;}
-::-webkit-scrollbar-thumb{background:var(--surface-3);border-radius:8px;}
-::-webkit-scrollbar-track{background:transparent;}
-
-/* ---------- LOGIN ---------- */
-#loginScreen{
-  position:fixed;inset:0;z-index:50;
-  display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 30% 20%, rgba(0,229,160,.08), transparent 40%), var(--bg);
-}
-.login-card{
-  width:min(380px,92vw);
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:32px 28px;
-  position:relative;
-  overflow:hidden;
-}
-.login-card::before{
-  content:"";position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--accent),transparent);
-}
-.login-node{
-  display:flex;align-items:center;gap:10px;margin-bottom:22px;
-}
-.login-node .dot{
-  width:10px;height:10px;border-radius:50%;background:var(--accent);
-  box-shadow:0 0 12px var(--accent-glow);
-}
-.login-eyebrow{
-  font-family:var(--font-mono);font-size:11px;color:var(--accent);
-  letter-spacing:1.5px;text-transform:uppercase;
-}
-.login-card h1{font-size:22px;margin-bottom:4px;}
-.login-card p.sub{color:var(--text-dim);font-size:13px;margin:0 0 22px;}
-.field{margin-bottom:14px;}
-.field label{
-  display:block;font-size:11.5px;color:var(--text-dim);
-  margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px;font-family:var(--font-mono);
-}
-.field input,.field select,.field textarea{
-  width:100%;background:var(--surface-2);border:1px solid var(--line);
-  border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;
-  outline:none;transition:border-color .15s, box-shadow .15s;
-}
-.field input:focus,.field select:focus,.field textarea:focus{
-  border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);
-}
-.btn{
-  border:none;border-radius:8px;padding:11px 18px;font-size:13.5px;font-weight:600;
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  transition:transform .1s, filter .15s; letter-spacing:.2px;
-}
-.btn:active{transform:scale(.97);}
-.btn-primary{background:var(--accent);color:#04140e;}
-.btn-primary:hover{filter:brightness(1.08);}
-.btn-ghost{background:var(--surface-3);color:var(--text);border:1px solid var(--line);}
-.btn-ghost:hover{border-color:var(--accent-dim);}
-.btn-danger{background:rgba(255,92,106,.12);color:var(--red);border:1px solid rgba(255,92,106,.3);}
-.btn-block{width:100%;}
-.login-error{color:var(--red);font-size:12.5px;margin-top:10px;min-height:16px;}
-.login-alt{margin-top:18px;padding-top:18px;border-top:1px dashed var(--line);}
-.login-alt small{color:var(--text-faint);font-size:11.5px;line-height:1.5;display:block;}
-
-/* ---------- APP SHELL ---------- */
-#app{display:none; position:relative; z-index:1;}
-.shell{display:flex;min-height:100vh;}
-
-/* sidebar — "pipeline" nav */
-.sidebar{
-  width:230px;flex:none;background:var(--surface);
-  border-right:1px solid var(--line);
-  padding:22px 0;display:flex;flex-direction:column;
-  position:sticky;top:0;height:100vh;
-}
-.brand{
-  display:flex;align-items:center;gap:10px;padding:0 20px 22px;
-  border-bottom:1px solid var(--line-soft);margin-bottom:8px;
-}
-.brand .mark{
-  width:26px;height:26px;border-radius:7px;background:var(--accent);
-  display:flex;align-items:center;justify-content:center;color:#04140e;font-weight:700;font-family:var(--font-display);
-  box-shadow:0 0 16px var(--accent-glow);
-}
-.brand span{font-family:var(--font-display);font-weight:600;font-size:15px;}
-.pipeline{position:relative;padding:14px 0 14px 0;flex:1;}
-.pipeline::before{
-  content:"";position:absolute;left:29px;top:20px;bottom:20px;width:1px;
-  background:linear-gradient(var(--line), var(--line) 100%);
-}
-.nav-node{
-  position:relative;display:flex;align-items:center;gap:12px;
-  padding:11px 20px 11px 18px;margin:2px 0;cursor:pointer;
-  color:var(--text-dim);font-size:13.5px;font-weight:500;
-  transition:color .15s;
-}
-.nav-node .dotwrap{
-  width:20px;flex:none;display:flex;justify-content:center;position:relative;z-index:1;
-}
-.nav-node .nd{
-  width:9px;height:9px;border-radius:50%;background:var(--surface-3);
-  border:1px solid var(--line);transition:all .15s;
-}
-.nav-node:hover{color:var(--text);}
-.nav-node.active{color:var(--text);background:linear-gradient(90deg, var(--accent-glow), transparent);}
-.nav-node.active .nd{background:var(--accent);border-color:var(--accent);box-shadow:0 0 8px var(--accent-glow);}
-.nav-node.active::after{
-  content:"";position:absolute;right:0;top:0;bottom:0;width:2px;background:var(--accent);
-}
-.nav-node .lbl-sub{display:block;font-size:10px;color:var(--text-faint);font-family:var(--font-mono);margin-top:1px;}
-.sidebar-foot{padding:14px 20px 0;border-top:1px solid var(--line-soft);}
-.month-pill{
-  font-family:var(--font-mono);font-size:11px;color:var(--accent);
-  background:var(--accent-glow);border:1px solid rgba(0,229,160,.3);
-  padding:5px 9px;border-radius:6px;display:inline-block;margin-bottom:10px;
-}
-
-.main{flex:1;min-width:0;padding:26px 32px 60px;}
-.topbar{
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
-  margin-bottom:26px;flex-wrap:wrap;
-}
-.topbar h2{font-size:20px;}
-.topbar .crumb{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
-.topbar-actions{display:flex;gap:10px;flex-wrap:wrap;}
-
-/* cards / nodes */
-.grid{display:grid;gap:16px;}
-.grid-4{grid-template-columns:repeat(4,1fr);}
-.grid-2{grid-template-columns:1.3fr .7fr;}
-@media(max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr);}.grid-2{grid-template-columns:1fr;}}
-@media(max-width:640px){.grid-4{grid-template-columns:1fr;}}
-
-.card{
-  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-  padding:18px 20px;position:relative;
-}
-.card::before{
-  content:"";position:absolute;top:12px;right:12px;width:6px;height:6px;border-radius:50%;
-  background:var(--surface-3);
-}
-.stat-card .k{font-family:var(--font-mono);font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;}
-.stat-card .v{font-family:var(--font-display);font-size:26px;margin-top:6px;font-weight:600;}
-.stat-card .v.pos{color:var(--accent);}
-.stat-card .v.neg{color:var(--red);}
-.stat-card .d{font-size:12px;color:var(--text-faint);margin-top:4px;}
-
-.card h3{font-size:14px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-.card h3 .tag{
-  font-family:var(--font-mono);font-size:10px;background:var(--surface-3);color:var(--text-dim);
-  padding:2px 7px;border-radius:5px;font-weight:400;
-}
-
-/* tables */
-table{width:100%;border-collapse:collapse;font-size:13.5px;}
-th{
-  text-align:left;font-family:var(--font-mono);font-size:10.5px;text-transform:uppercase;
-  letter-spacing:.6px;color:var(--text-faint);padding:8px 10px;border-bottom:1px solid var(--line);
-  white-space:nowrap;
-}
-td{padding:10px 10px;border-bottom:1px solid var(--line-soft);vertical-align:middle;}
-tr:hover td{background:rgba(255,255,255,.015);}
-.empty-row td{color:var(--text-faint);text-align:center;padding:34px 10px;font-size:13px;}
-
-.badge{
-  font-family:var(--font-mono);font-size:10.5px;padding:3px 9px;border-radius:20px;
-  display:inline-flex;align-items:center;gap:5px;font-weight:500;white-space:nowrap;
-}
-.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;}
-.badge.pago{background:rgba(0,229,160,.12);color:var(--accent);}
-.badge.pendente{background:rgba(255,176,32,.12);color:var(--amber);}
-.badge.atrasado{background:rgba(255,92,106,.12);color:var(--red);}
-.badge.bom{background:rgba(0,229,160,.12);color:var(--accent);}
-.badge.ruim{background:rgba(255,92,106,.12);color:var(--red);}
-.cat-chip{
-  font-size:11.5px;padding:3px 9px;border-radius:6px;background:var(--surface-3);
-  color:var(--text-dim);border:1px solid var(--line);white-space:nowrap;
-}
-.row-actions{display:flex;gap:6px;}
-.icon-btn{
-  width:28px;height:28px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);
-  color:var(--text-dim);display:flex;align-items:center;justify-content:center;font-size:13px;
-}
-.icon-btn:hover{color:var(--text);border-color:var(--accent-dim);}
-
-.section-gap{margin-bottom:18px;}
-.tablewrap{overflow-x:auto;}
-
-/* modal */
-.modal-backdrop{
-  position:fixed;inset:0;background:rgba(6,8,12,.7);backdrop-filter:blur(3px);
-  display:none;align-items:flex-start;justify-content:center;z-index:60;padding:40px 16px;overflow:auto;
-}
-.modal-backdrop.open{display:flex;}
-.modal{
-  width:min(560px,100%);background:var(--surface);border:1px solid var(--line);
-  border-radius:var(--radius);padding:26px 26px 22px;
-}
-.modal.wide{width:min(820px,100%);}
-.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
-.modal-head h3{font-size:16px;}
-.close-x{background:none;border:none;color:var(--text-dim);font-size:20px;line-height:1;}
-.close-x:hover{color:var(--text);}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-@media(max-width:520px){.two-col{grid-template-columns:1fr;}}
-.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;}
-
-/* print preview */
-.print-sheet{
-  width:210mm;min-height:297mm;background:#fff;color:#111;margin:0 auto;
-  padding:16mm;font-family:'Inter',sans-serif;box-shadow:0 0 40px rgba(0,0,0,.4);
-}
-.print-sheet h1{color:#111;font-family:'Space Grotesk',sans-serif;font-size:20px;}
-.print-sheet .ps-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:16px;}
-.print-sheet .ps-head small{color:#666;font-family:'JetBrains Mono',monospace;}
-.print-sheet table{font-size:11.5px;}
-.print-sheet th{color:#555;border-bottom:1px solid #999;}
-.print-sheet td{border-bottom:1px solid #ddd;color:#222;}
-.print-sheet .ps-total{
-  display:flex;justify-content:space-between;margin-top:6px;padding:8px 0;border-top:2px solid #111;font-weight:700;
-}
-.print-sheet .cat-block{margin-bottom:14px;}
-.print-sheet .cat-block h4{font-size:12.5px;text-transform:uppercase;letter-spacing:.5px;color:#333;margin-bottom:6px;}
-.print-toolbar{
-  position:sticky;top:0;background:var(--bg);padding:10px 0 18px;display:flex;justify-content:center;gap:12px;z-index:2;
-}
-@media print{
-  body *{visibility:hidden;}
-  .print-toolbar{display:none!important;}
-  #printArea, #printArea *{visibility:visible;}
-  #printArea{position:absolute;left:0;top:0;width:100%;}
-  .print-sheet{box-shadow:none;width:100%;min-height:0;}
-  @page{size:A4;margin:0;}
-}
-
-/* empty state */
-.empty-state{
-  text-align:center;padding:50px 20px;color:var(--text-faint);
-}
-.empty-state .glyph{font-size:30px;margin-bottom:10px;opacity:.6;}
-.empty-state p{font-size:13px;max-width:320px;margin:6px auto 0;}
-
-/* toast */
-#toast{
-  position:fixed;bottom:22px;right:22px;background:var(--surface-2);border:1px solid var(--line);
-  border-left:3px solid var(--accent);padding:12px 18px;border-radius:8px;font-size:13px;
-  z-index:80;display:none;box-shadow:0 8px 24px rgba(0,0,0,.4);
-}
-
-/* mobile */
-.hamburger{display:none;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;width:38px;height:38px;color:var(--text);font-size:16px;}
-@media(max-width:880px){
-  .hamburger{display:flex;align-items:center;justify-content:center;}
-  .sidebar{
-    position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);transition:transform .2s;z-index:70;
-    box-shadow:20px 0 60px rgba(0,0,0,.5);
-  }
-  .sidebar.open{transform:translateX(0);}
-  .main{padding:18px 16px 60px;}
-  .grid-4,.grid-2{grid-template-columns:1fr;}
-}
-.credit-bar-track{height:8px;border-radius:6px;background:var(--surface-3);overflow:hidden;margin-top:8px;}
-.credit-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent-dim),var(--accent));}
-.small-muted{color:var(--text-faint);font-size:11.5px;}
-</style>
 </head>
 <body>
+
+<!-- ============ HOME (landing) ============ -->
+<div id="homeScreen">
+  <nav class="home-nav">
+    <div class="brand"><div class="mark">F</div><span>Fluxo</span></div>
+    <button class="btn btn-primary" onclick="showLogin()">Entrar</button>
+  </nav>
+
+  <section class="home-hero">
+    <div class="home-eyebrow"><span class="dot"></span> Controle financeiro pessoal</div>
+    <h1>Organize suas finanças com clareza <span class="grad">de automação</span>.</h1>
+    <p class="lead">Despesas, contas a pagar, cartões de crédito e o histórico de cada mês — tudo num só painel, sincronizado com sua conta Google.</p>
+    <div class="home-cta-row">
+      <button class="btn btn-primary" onclick="showLogin()">Começar agora</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('featSection').scrollIntoView({behavior:'smooth'})">Ver funcionalidades</button>
+    </div>
+  </section>
+
+  <div class="pipeline-strip">
+    <div class="pnode"><div class="pn-idx">01</div><h4>Lançar</h4><p>Despesas, renda e contas a pagar por categoria.</p></div>
+    <div class="pnode"><div class="pn-idx">02</div><h4>Organizar</h4><p>Abas dedicadas: dashboard, contas, crédito e histórico.</p></div>
+    <div class="pnode"><div class="pn-idx">03</div><h4>Analisar</h4><p>Gráficos por categoria e comparativo dos últimos meses.</p></div>
+    <div class="pnode"><div class="pn-idx">04</div><h4>Fechar o mês</h4><p>Arquiva o período e inicia o próximo com histórico preservado.</p></div>
+    <div class="pnode"><div class="pn-idx">05</div><h4>Exportar</h4><p>Visualize em folha A4 e imprima ou salve em PDF.</p></div>
+  </div>
+
+  <section class="home-section" id="featSection">
+    <h2>O que o Fluxo faz por você</h2>
+    <p class="home-sub">Pensado para quem lida bastante com cartão de crédito e quer saber, de verdade, para onde o dinheiro está indo.</p>
+    <div class="feat-grid">
+      <div class="feat-card"><span class="glyph">📊</span><h4>Dashboard do mês</h4><p>Renda, despesas, saldo e contas pendentes num resumo visual, com gráfico por categoria.</p></div>
+      <div class="feat-card"><span class="glyph">🧾</span><h4>Despesas por categoria</h4><p>Cadastre gastos com descrição, categoria e data — categorias 100% personalizáveis.</p></div>
+      <div class="feat-card"><span class="glyph">📅</span><h4>Contas a pagar</h4><p>Tipo de conta, fornecedor, vencimento, taxa, valor, situação e observações.</p></div>
+      <div class="feat-card"><span class="glyph">💳</span><h4>Análise de crédito</h4><p>Veja quantos fornecedores de cartão você tem e para quem deve mais.</p></div>
+      <div class="feat-card"><span class="glyph">📈</span><h4>Histórico mensal</h4><p>Feche o mês e acompanhe, ao longo do ano, quais meses foram bons ou ruins.</p></div>
+      <div class="feat-card"><span class="glyph">🖨️</span><h4>Exportação em PDF</h4><p>Pré-visualize os gastos em folha A4 antes de imprimir ou salvar como PDF.</p></div>
+    </div>
+  </section>
+
+  <section class="home-section">
+    <div class="home-cloud">
+      <span class="g">🔐</span>
+      <div>
+        <h4>Seus dados, na sua conta Google</h4>
+        <p>Ao entrar com Google, o Fluxo sincroniza tudo com o Firebase associado à sua conta — os mesmos lançamentos aparecem no celular e no computador. Sem conta Google, o app funciona em modo local, protegido por senha, salvando apenas neste navegador.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="home-foot">
+    <span>Fluxo — controle financeiro pessoal</span>
+    <span>Uso pessoal · dados protegidos por senha e/ou conta Google</span>
+  </footer>
+</div>
 
 <!-- ============ LOGIN ============ -->
 <div id="loginScreen">
   <div class="login-card">
+    <button class="login-back" onclick="showHome()">← voltar</button>
     <div class="login-node"><span class="dot"></span><span class="login-eyebrow">Acesso restrito</span></div>
-    <h1 id="loginTitle">Fluxo</h1>
-    <p class="sub" id="loginSub">Controle financeiro pessoal · protegido por senha</p>
+    <h1>Entrar no Fluxo</h1>
+    <p class="sub">Escolha como deseja acessar seus dados.</p>
 
-    <div id="setupBlock" style="display:none;">
-      <div class="field"><label>Criar senha de acesso</label><input type="password" id="setupPass" placeholder="Mínimo 4 caracteres"></div>
-      <div class="field"><label>Confirmar senha</label><input type="password" id="setupPass2" placeholder="Repita a senha"></div>
-      <button class="btn btn-primary btn-block" onclick="doSetupPassword()">Criar e entrar</button>
+    <button id="googleBtn" class="btn btn-google btn-block" onclick="signInGoogle()">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8 3l5.7-5.7C34.5 5.1 29.5 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.6 18.9 13 24 13c3.1 0 5.9 1.1 8 3l5.7-5.7C34.5 7.1 29.5 5 24 5c-7.6 0-14.1 4.3-17.4 9.7z"/><path fill="#4CAF50" d="M24 43c5.4 0 10.3-2 14-5.4l-6.5-5.4c-2 1.5-4.6 2.4-7.5 2.4-5.2 0-9.7-3.5-11.3-8.3l-6.6 5.1C9.8 38.6 16.3 43 24 43z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.7l6.5 5.4C41.5 36 44 30.6 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
+      <span id="gBtnLabel">Entrar com Google</span>
+    </button>
+    <p id="googleHint" class="small-muted" style="display:none;margin-top:8px;">O login com Google ainda não foi configurado neste site (veja README.md).</p>
+
+    <div class="login-divider">ou</div>
+    <div id="localToggleWrap">
+      <button class="link-btn" onclick="toggleLocalArea()">Continuar sem conta Google (salvar somente neste aparelho)</button>
     </div>
 
-    <div id="loginBlock" style="display:none;">
-      <div class="field"><label>Senha</label><input type="password" id="loginPass" placeholder="Sua senha" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <button class="btn btn-primary btn-block" onclick="doLogin()">Entrar</button>
+    <div id="localArea" style="display:none;margin-top:16px;">
+      <div id="localSetupBlock" style="display:none;">
+        <div class="field"><label>Criar senha de acesso</label><input type="password" id="setupPass" placeholder="Mínimo 4 caracteres"></div>
+        <div class="field"><label>Confirmar senha</label><input type="password" id="setupPass2" placeholder="Repita a senha"></div>
+        <button class="btn btn-ghost btn-block" onclick="doSetupPassword()">Criar e entrar (modo local)</button>
+      </div>
+      <div id="localLoginBlock" style="display:none;">
+        <div class="field"><label>Senha</label><input type="password" id="loginPass" placeholder="Sua senha" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <button class="btn btn-ghost btn-block" onclick="doLogin()">Entrar (modo local)</button>
+      </div>
     </div>
 
     <div class="login-error" id="loginError"></div>
-
-    <div class="login-alt">
-      <small>
-        <strong style="color:var(--text-dim)">Sobre a conta Google:</strong> a sincronização com Google/Firestore é opcional e configurada na aba <em>Configurações</em> depois de entrar — exige um projeto Firebase gratuito seu (o site não pode criar um por você). Sem essa configuração, os dados ficam salvos apenas neste navegador/dispositivo.
-      </small>
-    </div>
   </div>
 </div>
 
@@ -357,8 +108,9 @@ tr:hover td{background:rgba(255,255,255,.015);}
       <div class="brand"><div class="mark">F</div><span>Fluxo</span></div>
       <nav class="pipeline" id="navPipeline"></nav>
       <div class="sidebar-foot">
+        <div class="acct-pill" id="acctPill"></div>
         <span class="month-pill mono" id="monthPill"></span>
-        <button class="btn btn-ghost btn-block" style="margin-top:10px;font-size:12.5px;" onclick="lockApp()">🔒 Bloquear</button>
+        <button class="btn btn-ghost btn-block" style="margin-top:10px;font-size:12.5px;" onclick="lockApp()">🔒 Sair / Bloquear</button>
       </div>
     </aside>
 
@@ -379,12 +131,10 @@ tr:hover td{background:rgba(255,255,255,.015);}
   </div>
 </div>
 
-<!-- Modais genéricos -->
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal" id="modalBox"></div>
 </div>
 
-<!-- Print preview -->
 <div class="modal-backdrop" id="printBackdrop">
   <div style="width:100%;">
     <div class="print-toolbar">
@@ -397,658 +147,10 @@ tr:hover td{background:rgba(255,255,255,.015);}
 
 <div id="toast"></div>
 
-<!-- Firebase (opcional — só é inicializado se o usuário configurar em Configurações) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<script>
-/* =========================================================
-   FLUXO — Controle Financeiro Pessoal
-   Armazenamento local (localStorage) + sync opcional (Firebase)
-   ========================================================= */
-
-const STORAGE_KEY = 'fluxo_db_v1';
-const DEFAULT_CATEGORIES = ['Moradia','Alimentação','Transporte','Saúde','Educação','Lazer','Assinaturas','Cartão de Crédito','Outros'];
-const TIPOS_CONTA = ['Cartão de Crédito','Boleto','Financiamento','Empréstimo','Serviço/Assinatura','Utilidade (água/luz/internet)','Outro'];
-
-let DB = null;
-let currentTab = 'dashboard';
-let fbApp=null, fbAuth=null, fbDb=null, fbUser=null;
-
-/* ---------- utils ---------- */
-function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36);}
-function fmtBRL(n){ n = Number(n)||0; return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-function fmtDate(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
-function monthKeyToLabel(key){
-  const [y,m]=key.split('-'); const names=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  return `${names[parseInt(m,10)-1]} de ${y}`;
-}
-function currentMonthKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
-function nextMonthKey(key){ let [y,m]=key.split('-').map(Number); m++; if(m>12){m=1;y++;} return y+'-'+String(m).padStart(2,'0'); }
-function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(window.__toastT); window.__toastT=setTimeout(()=>t.style.display='none',2600); }
-async function sha256(text){ const enc=new TextEncoder().encode(text); const buf=await crypto.subtle.digest('SHA-256',enc); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
-
-/* ---------- persistence ---------- */
-function blankMonth(){ return {income:[], expenses:[], bills:[], closed:false}; }
-function loadDB(){
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
-  return null;
-}
-function saveDB(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
-  syncToCloud();
-}
-function ensureMonth(key){
-  if(!DB.months[key]) DB.months[key]=blankMonth();
-}
-
-/* ---------- boot ---------- */
-window.addEventListener('DOMContentLoaded', ()=>{
-  DB = loadDB();
-  if(!DB){
-    document.getElementById('setupBlock').style.display='block';
-  } else if(DB.firebase){
-    initFirebase(DB.firebase, true);
-    document.getElementById('loginBlock').style.display='block';
-  } else {
-    document.getElementById('loginBlock').style.display='block';
-  }
-});
-
-async function doSetupPassword(){
-  const p1=document.getElementById('setupPass').value;
-  const p2=document.getElementById('setupPass2').value;
-  const err=document.getElementById('loginError'); err.textContent='';
-  if(p1.length<4){ err.textContent='A senha precisa ter ao menos 4 caracteres.'; return; }
-  if(p1!==p2){ err.textContent='As senhas não coincidem.'; return; }
-  const hash = await sha256(p1);
-  DB = { passwordHash:hash, categories:[...DEFAULT_CATEGORIES], currentMonth:currentMonthKey(), months:{}, firebase:null };
-  ensureMonth(DB.currentMonth);
-  saveDB();
-  enterApp();
-}
-
-async function doLogin(){
-  const p = document.getElementById('loginPass').value;
-  const err=document.getElementById('loginError');
-  const hash = await sha256(p);
-  if(hash === DB.passwordHash){ err.textContent=''; enterApp(); }
-  else{ err.textContent='Senha incorreta.'; }
-}
-
-function lockApp(){
-  document.getElementById('app').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('loginBlock').style.display='block';
-  document.getElementById('setupBlock').style.display='none';
-  document.getElementById('loginPass').value='';
-}
-
-function enterApp(){
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('app').style.display='block';
-  ensureMonth(DB.currentMonth);
-  renderSidebar();
-  goTab('dashboard');
-}
-
-/* ---------- navigation ---------- */
-const TABS = [
-  {id:'dashboard', label:'Dashboard', sub:'visão geral'},
-  {id:'despesas', label:'Despesas', sub:'gastos do mês'},
-  {id:'renda', label:'Renda', sub:'opcional'},
-  {id:'contas', label:'Contas a Pagar', sub:'boletos e faturas'},
-  {id:'credito', label:'Análise de Crédito', sub:'cartões'},
-  {id:'historico', label:'Histórico', sub:'meses fechados'},
-  {id:'config', label:'Configurações', sub:'categorias · sync'},
-];
-
-function renderSidebar(){
-  document.getElementById('monthPill').textContent = '● '+monthKeyToLabel(DB.currentMonth);
-  const nav = document.getElementById('navPipeline');
-  nav.innerHTML = TABS.map(t=>`
-    <div class="nav-node ${t.id===currentTab?'active':''}" onclick="goTab('${t.id}')">
-      <span class="dotwrap"><span class="nd"></span></span>
-      <span>${t.label}<span class="lbl-sub">${t.sub}</span></span>
-    </div>`).join('');
-}
-
-function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('open'); }
-
-function goTab(id){
-  currentTab = id;
-  document.getElementById('sidebar').classList.remove('open');
-  renderSidebar();
-  const meta = TABS.find(t=>t.id===id);
-  document.getElementById('pageTitle').textContent = meta.label;
-  document.getElementById('crumb').textContent = 'Fluxo / '+meta.sub;
-  const actions = document.getElementById('topbarActions');
-  actions.innerHTML='';
-  if(id==='dashboard' || id==='despesas' || id==='contas'){
-    actions.innerHTML = `<button class="btn btn-ghost" onclick="openPrintPreview()">📄 Ver A4</button><button class="btn btn-primary" onclick="openPrintPreview(true)">🖨 Imprimir / PDF</button>`;
-  }
-  renderTab(id);
-}
-
-function renderTab(id){
-  const c = document.getElementById('content');
-  if(id==='dashboard') c.innerHTML = viewDashboard();
-  if(id==='despesas') c.innerHTML = viewDespesas();
-  if(id==='renda') c.innerHTML = viewRenda();
-  if(id==='contas') c.innerHTML = viewContas();
-  if(id==='credito') c.innerHTML = viewCredito();
-  if(id==='historico') c.innerHTML = viewHistorico();
-  if(id==='config') c.innerHTML = viewConfig();
-  if(id==='dashboard') setTimeout(drawDashboardCharts,0);
-}
-
-/* ---------- derived data ---------- */
-function monthData(key){ ensureMonth(key); return DB.months[key]; }
-function totalIncome(m){ return m.income.reduce((s,i)=>s+Number(i.valor||0),0); }
-function totalExpenses(m){ return m.expenses.reduce((s,e)=>s+Number(e.valor||0),0); }
-function totalBills(m){ return m.bills.reduce((s,b)=>s+Number(b.valor||0),0); }
-function totalOut(m){ return totalExpenses(m)+totalBills(m); }
-function categoryBreakdown(m){
-  const map={};
-  m.expenses.forEach(e=>{ map[e.categoria]=(map[e.categoria]||0)+Number(e.valor||0); });
-  m.bills.forEach(b=>{ const k='Conta: '+b.tipoConta; map[k]=(map[k]||0)+Number(b.valor||0); });
-  return map;
-}
-
-/* ---------- DASHBOARD ---------- */
-function viewDashboard(){
-  const m = monthData(DB.currentMonth);
-  const inc = totalIncome(m), out = totalOut(m), saldo = inc-out;
-  const pend = m.bills.filter(b=>b.situacao!=='Pago');
-  const pendVal = pend.reduce((s,b)=>s+Number(b.valor||0),0);
-  return `
-  <div class="grid grid-4 section-gap">
-    <div class="card stat-card"><div class="k">Renda do mês</div><div class="v pos">${fmtBRL(inc)}</div><div class="d">${m.income.length} lançamento(s)</div></div>
-    <div class="card stat-card"><div class="k">Despesas totais</div><div class="v neg">${fmtBRL(out)}</div><div class="d">${m.expenses.length} despesas + ${m.bills.length} contas</div></div>
-    <div class="card stat-card"><div class="k">Saldo do mês</div><div class="v ${saldo>=0?'pos':'neg'}">${fmtBRL(saldo)}</div><div class="d">${saldo>=0?'resultado positivo':'resultado negativo'}</div></div>
-    <div class="card stat-card"><div class="k">Contas pendentes</div><div class="v" style="color:var(--amber)">${fmtBRL(pendVal)}</div><div class="d">${pend.length} conta(s) em aberto</div></div>
-  </div>
-  <div class="grid grid-2">
-    <div class="card">
-      <h3>Despesas por categoria <span class="tag">${monthKeyToLabel(DB.currentMonth)}</span></h3>
-      <canvas id="chartCat" height="220"></canvas>
-    </div>
-    <div class="card">
-      <h3>Próximos vencimentos</h3>
-      ${pend.slice().sort((a,b)=>a.dataVencimento.localeCompare(b.dataVencimento)).slice(0,6).map(b=>`
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line-soft);font-size:13px;">
-          <div><div>${b.fornecedor}</div><div class="small-muted mono">${fmtDate(b.dataVencimento)}</div></div>
-          <div class="mono" style="color:var(--amber)">${fmtBRL(b.valor)}</div>
-        </div>`).join('') || '<p class="small-muted">Nenhuma conta pendente 🎉</p>'}
-    </div>
-  </div>
-  <div class="card" style="margin-top:16px;">
-    <h3>Últimos 6 meses <span class="tag">renda vs despesa</span></h3>
-    <canvas id="chartTrend" height="90"></canvas>
-  </div>`;
-}
-
-function drawDashboardCharts(){
-  const m = monthData(DB.currentMonth);
-  const breakdown = categoryBreakdown(m);
-  const labels = Object.keys(breakdown);
-  const data = Object.values(breakdown);
-  const palette = ['#00e5a0','#4da3ff','#ffb020','#ff5c6a','#a78bfa','#f472b6','#2dd4bf','#facc15','#fb7185','#38bdf8'];
-  const catCanvas = document.getElementById('chartCat');
-  if(catCanvas){
-    if(!labels.length){
-      catCanvas.parentElement.insertAdjacentHTML('beforeend','<p class="small-muted" style="text-align:center;margin-top:20px;">Sem despesas lançadas ainda.</p>');
-    } else {
-      new Chart(catCanvas, {
-        type:'doughnut',
-        data:{ labels, datasets:[{data, backgroundColor:palette, borderColor:'#12161e', borderWidth:2}] },
-        options:{ plugins:{legend:{position:'bottom', labels:{color:'#8b93a3', font:{size:11}}}} }
-      });
-    }
-  }
-  // trend: last 6 months including current
-  const keys=[]; let k=DB.currentMonth;
-  for(let i=0;i<6;i++){ keys.unshift(k); const [y,mo]=k.split('-').map(Number); let py=y, pm=mo-1; if(pm<1){pm=12;py--;} k=py+'-'+String(pm).padStart(2,'0'); }
-  const incomes = keys.map(kk=>DB.months[kk]?totalIncome(DB.months[kk]):0);
-  const expenses = keys.map(kk=>DB.months[kk]?totalOut(DB.months[kk]):0);
-  const trendCanvas = document.getElementById('chartTrend');
-  if(trendCanvas){
-    new Chart(trendCanvas, {
-      type:'bar',
-      data:{ labels:keys.map(monthKeyToLabel), datasets:[
-        {label:'Renda', data:incomes, backgroundColor:'#00e5a0'},
-        {label:'Despesas', data:expenses, backgroundColor:'#ff5c6a'}
-      ]},
-      options:{ scales:{ x:{ticks:{color:'#8b93a3'},grid:{color:'#1b202a'}}, y:{ticks:{color:'#8b93a3'},grid:{color:'#1b202a'}} }, plugins:{legend:{labels:{color:'#8b93a3'}}} }
-    });
-  }
-}
-
-/* ---------- DESPESAS ---------- */
-function viewDespesas(){
-  const m = monthData(DB.currentMonth);
-  const rows = m.expenses.slice().sort((a,b)=>b.data.localeCompare(a.data));
-  return `
-  <div class="card">
-    <h3>Despesas de ${monthKeyToLabel(DB.currentMonth)} <span class="tag">${rows.length} registro(s)</span>
-      <span style="margin-left:auto"></span>
-      <button class="btn btn-primary" style="margin-left:auto;" onclick="openExpenseModal()">+ Nova despesa</button>
-    </h3>
-    <div class="tablewrap"><table>
-      <thead><tr><th>Descrição</th><th>Categoria</th><th>Data</th><th>Valor</th><th></th></tr></thead>
-      <tbody>
-        ${rows.length? rows.map(e=>`
-          <tr>
-            <td>${e.descricao}</td>
-            <td><span class="cat-chip">${e.categoria}</span></td>
-            <td class="mono">${fmtDate(e.data)}</td>
-            <td class="mono">${fmtBRL(e.valor)}</td>
-            <td><div class="row-actions">
-              <button class="icon-btn" onclick="openExpenseModal('${e.id}')">✎</button>
-              <button class="icon-btn" onclick="deleteExpense('${e.id}')">🗑</button>
-            </div></td>
-          </tr>`).join('') : `<tr class="empty-row"><td colspan="5">Nenhuma despesa lançada este mês.</td></tr>`}
-      </tbody>
-    </table></div>
-  </div>`;
-}
-
-function openExpenseModal(id){
-  const m = monthData(DB.currentMonth);
-  const item = id ? m.expenses.find(e=>e.id===id) : null;
-  const catsOpt = DB.categories.map(c=>`<option ${item&&item.categoria===c?'selected':''}>${c}</option>`).join('');
-  showModal(`
-    <div class="modal-head"><h3>${item?'Editar despesa':'Nova despesa'}</h3><button class="close-x" onclick="closeModal()">✕</button></div>
-    <div class="field"><label>Descrição</label><input id="fDesc" value="${item?item.descricao:''}" placeholder="Ex: Supermercado"></div>
-    <div class="two-col">
-      <div class="field"><label>Categoria</label><select id="fCat">${catsOpt}</select></div>
-      <div class="field"><label>Data</label><input type="date" id="fData" value="${item?item.data:new Date().toISOString().slice(0,10)}"></div>
-    </div>
-    <div class="field"><label>Valor (R$)</label><input type="number" step="0.01" id="fValor" value="${item?item.valor:''}" placeholder="0,00"></div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveExpense('${item?item.id:''}')">Salvar</button>
-    </div>`);
-}
-function saveExpense(id){
-  const m = monthData(DB.currentMonth);
-  const desc=document.getElementById('fDesc').value.trim();
-  const cat=document.getElementById('fCat').value;
-  const data=document.getElementById('fData').value;
-  const valor=parseFloat(document.getElementById('fValor').value)||0;
-  if(!desc||!data){ toast('Preencha descrição e data.'); return; }
-  if(id){ const e=m.expenses.find(x=>x.id===id); Object.assign(e,{descricao:desc,categoria:cat,data,valor}); }
-  else{ m.expenses.push({id:uid(),descricao:desc,categoria:cat,data,valor}); }
-  saveDB(); closeModal(); renderTab('despesas'); toast('Despesa salva.');
-}
-function deleteExpense(id){
-  const m = monthData(DB.currentMonth);
-  m.expenses = m.expenses.filter(e=>e.id!==id);
-  saveDB(); renderTab('despesas'); toast('Despesa removida.');
-}
-
-/* ---------- RENDA ---------- */
-function viewRenda(){
-  const m = monthData(DB.currentMonth);
-  const rows = m.income.slice().sort((a,b)=>b.data.localeCompare(a.data));
-  return `
-  <div class="card">
-    <h3>Renda de ${monthKeyToLabel(DB.currentMonth)} <span class="tag">opcional</span>
-      <button class="btn btn-primary" style="margin-left:auto;" onclick="openIncomeModal()">+ Nova renda</button>
-    </h3>
-    <div class="tablewrap"><table>
-      <thead><tr><th>Descrição</th><th>Data</th><th>Valor</th><th></th></tr></thead>
-      <tbody>
-        ${rows.length? rows.map(i=>`
-          <tr><td>${i.descricao}</td><td class="mono">${fmtDate(i.data)}</td><td class="mono" style="color:var(--accent)">${fmtBRL(i.valor)}</td>
-          <td><div class="row-actions">
-            <button class="icon-btn" onclick="openIncomeModal('${i.id}')">✎</button>
-            <button class="icon-btn" onclick="deleteIncome('${i.id}')">🗑</button>
-          </div></td></tr>`).join('') : `<tr class="empty-row"><td colspan="4">Nenhuma renda lançada este mês.</td></tr>`}
-      </tbody>
-    </table></div>
-  </div>`;
-}
-function openIncomeModal(id){
-  const m = monthData(DB.currentMonth);
-  const item = id ? m.income.find(e=>e.id===id) : null;
-  showModal(`
-    <div class="modal-head"><h3>${item?'Editar renda':'Nova renda'}</h3><button class="close-x" onclick="closeModal()">✕</button></div>
-    <div class="field"><label>Descrição</label><input id="iDesc" value="${item?item.descricao:''}" placeholder="Ex: Salário, freelance..."></div>
-    <div class="two-col">
-      <div class="field"><label>Data</label><input type="date" id="iData" value="${item?item.data:new Date().toISOString().slice(0,10)}"></div>
-      <div class="field"><label>Valor (R$)</label><input type="number" step="0.01" id="iValor" value="${item?item.valor:''}"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveIncome('${item?item.id:''}')">Salvar</button>
-    </div>`);
-}
-function saveIncome(id){
-  const m = monthData(DB.currentMonth);
-  const desc=document.getElementById('iDesc').value.trim();
-  const data=document.getElementById('iData').value;
-  const valor=parseFloat(document.getElementById('iValor').value)||0;
-  if(!desc||!data){ toast('Preencha descrição e data.'); return; }
-  if(id){ const it=m.income.find(x=>x.id===id); Object.assign(it,{descricao:desc,data,valor}); }
-  else{ m.income.push({id:uid(),descricao:desc,data,valor}); }
-  saveDB(); closeModal(); renderTab('renda'); toast('Renda salva.');
-}
-function deleteIncome(id){
-  const m = monthData(DB.currentMonth);
-  m.income = m.income.filter(e=>e.id!==id);
-  saveDB(); renderTab('renda'); toast('Renda removida.');
-}
-
-/* ---------- CONTAS A PAGAR ---------- */
-function situBadge(s){
-  const cls = s==='Pago'?'pago':(s==='Atrasado'?'atrasado':'pendente');
-  return `<span class="badge ${cls}">${s}</span>`;
-}
-function viewContas(){
-  const m = monthData(DB.currentMonth);
-  const rows = m.bills.slice().sort((a,b)=>a.dataVencimento.localeCompare(b.dataVencimento));
-  return `
-  <div class="card">
-    <h3>Contas a pagar — ${monthKeyToLabel(DB.currentMonth)} <span class="tag">${rows.length}</span>
-      <button class="btn btn-primary" style="margin-left:auto;" onclick="openBillModal()">+ Nova conta</button>
-    </h3>
-    <div class="tablewrap"><table>
-      <thead><tr><th>Tipo</th><th>Fornecedor</th><th>Vencimento</th><th>Taxa</th><th>Valor</th><th>Situação</th><th>Obs.</th><th></th></tr></thead>
-      <tbody>
-        ${rows.length? rows.map(b=>`
-          <tr>
-            <td><span class="cat-chip">${b.tipoConta}</span></td>
-            <td>${b.fornecedor}</td>
-            <td class="mono">${fmtDate(b.dataVencimento)}</td>
-            <td class="mono">${b.taxa?b.taxa+'%':'—'}</td>
-            <td class="mono">${fmtBRL(b.valor)}</td>
-            <td>${situBadge(b.situacao)}</td>
-            <td class="small-muted" style="max-width:160px;white-space:normal;">${b.observacoes||'—'}</td>
-            <td><div class="row-actions">
-              <button class="icon-btn" onclick="openBillModal('${b.id}')">✎</button>
-              <button class="icon-btn" onclick="deleteBill('${b.id}')">🗑</button>
-            </div></td>
-          </tr>`).join('') : `<tr class="empty-row"><td colspan="8">Nenhuma conta cadastrada este mês.</td></tr>`}
-      </tbody>
-    </table></div>
-  </div>`;
-}
-function openBillModal(id){
-  const m = monthData(DB.currentMonth);
-  const item = id ? m.bills.find(b=>b.id===id) : null;
-  const tipoOpt = TIPOS_CONTA.map(t=>`<option ${item&&item.tipoConta===t?'selected':''}>${t}</option>`).join('');
-  const situOpt = ['Pendente','Pago','Atrasado'].map(s=>`<option ${item&&item.situacao===s?'selected':''}>${s}</option>`).join('');
-  showModal(`
-    <div class="modal-head"><h3>${item?'Editar conta':'Nova conta a pagar'}</h3><button class="close-x" onclick="closeModal()">✕</button></div>
-    <div class="two-col">
-      <div class="field"><label>Tipo de conta</label><select id="bTipo">${tipoOpt}</select></div>
-      <div class="field"><label>Fornecedor</label><input id="bForn" value="${item?item.fornecedor:''}" placeholder="Ex: Nubank, Enel..."></div>
-    </div>
-    <div class="two-col">
-      <div class="field"><label>Data de vencimento</label><input type="date" id="bVenc" value="${item?item.dataVencimento:new Date().toISOString().slice(0,10)}"></div>
-      <div class="field"><label>Taxa % (se houve)</label><input type="number" step="0.01" id="bTaxa" value="${item&&item.taxa?item.taxa:''}" placeholder="0"></div>
-    </div>
-    <div class="two-col">
-      <div class="field"><label>Valor da conta (R$)</label><input type="number" step="0.01" id="bValor" value="${item?item.valor:''}"></div>
-      <div class="field"><label>Situação</label><select id="bSitu">${situOpt}</select></div>
-    </div>
-    <div class="field"><label>Observações</label><textarea id="bObs" rows="2" placeholder="Notas adicionais...">${item?item.observacoes||'':''}</textarea></div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveBill('${item?item.id:''}')">Salvar</button>
-    </div>`);
-}
-function saveBill(id){
-  const m = monthData(DB.currentMonth);
-  const tipoConta=document.getElementById('bTipo').value;
-  const fornecedor=document.getElementById('bForn').value.trim();
-  const dataVencimento=document.getElementById('bVenc').value;
-  const taxa=parseFloat(document.getElementById('bTaxa').value)||0;
-  const valor=parseFloat(document.getElementById('bValor').value)||0;
-  const situacao=document.getElementById('bSitu').value;
-  const observacoes=document.getElementById('bObs').value.trim();
-  if(!fornecedor||!dataVencimento){ toast('Preencha fornecedor e vencimento.'); return; }
-  if(id){ const b=m.bills.find(x=>x.id===id); Object.assign(b,{tipoConta,fornecedor,dataVencimento,taxa,valor,situacao,observacoes}); }
-  else{ m.bills.push({id:uid(),tipoConta,fornecedor,dataVencimento,taxa,valor,situacao,observacoes}); }
-  saveDB(); closeModal(); renderTab('contas'); toast('Conta salva.');
-}
-function deleteBill(id){
-  const m = monthData(DB.currentMonth);
-  m.bills = m.bills.filter(b=>b.id!==id);
-  saveDB(); renderTab('contas'); toast('Conta removida.');
-}
-
-/* ---------- ANÁLISE DE CRÉDITO ---------- */
-function viewCredito(){
-  const m = monthData(DB.currentMonth);
-  const cartoes = m.bills.filter(b=>b.tipoConta==='Cartão de Crédito');
-  const byForn = {};
-  cartoes.forEach(b=>{ byForn[b.fornecedor]=byForn[b.fornecedor]||{devido:0,pago:0,count:0}; byForn[b.fornecedor].count++; if(b.situacao==='Pago') byForn[b.fornecedor].pago+=Number(b.valor); else byForn[b.fornecedor].devido+=Number(b.valor); });
-  const fornecedores = Object.keys(byForn);
-  const totalDevido = fornecedores.reduce((s,f)=>s+byForn[f].devido,0);
-  const maxDevido = Math.max(1,...fornecedores.map(f=>byForn[f].devido));
-  const ranking = fornecedores.slice().sort((a,b)=>byForn[b].devido-byForn[a].devido);
-  return `
-  <div class="grid grid-4 section-gap">
-    <div class="card stat-card"><div class="k">Fornecedores de crédito</div><div class="v">${fornecedores.length}</div><div class="d">cartões distintos este mês</div></div>
-    <div class="card stat-card"><div class="k">Total devido</div><div class="v neg">${fmtBRL(totalDevido)}</div><div class="d">em faturas pendentes</div></div>
-    <div class="card stat-card"><div class="k">Faturas lançadas</div><div class="v">${cartoes.length}</div><div class="d">no total do mês</div></div>
-    <div class="card stat-card"><div class="k">Maior credor</div><div class="v" style="font-size:17px;">${ranking[0]||'—'}</div><div class="d">${ranking[0]?fmtBRL(byForn[ranking[0]].devido):'sem dados'}</div></div>
-  </div>
-  <div class="card">
-    <h3>Quem eu devo mais <span class="tag">ranking por fornecedor</span></h3>
-    ${ranking.length? ranking.map(f=>`
-      <div style="margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;font-size:13.5px;">
-          <span>${f} <span class="small-muted">· ${byForn[f].count} fatura(s)</span></span>
-          <span class="mono">${fmtBRL(byForn[f].devido)}</span>
-        </div>
-        <div class="credit-bar-track"><div class="credit-bar-fill" style="width:${(byForn[f].devido/maxDevido*100).toFixed(0)}%"></div></div>
-      </div>`).join('') : '<div class="empty-state"><div class="glyph">💳</div><p>Nenhuma conta do tipo "Cartão de Crédito" lançada este mês. Cadastre em Contas a Pagar.</p></div>'}
-  </div>`;
-}
-
-/* ---------- HISTÓRICO ---------- */
-function viewHistorico(){
-  const keys = Object.keys(DB.months).filter(k=>DB.months[k].closed).sort();
-  const rows = keys.map(k=>{
-    const m=DB.months[k]; const inc=totalIncome(m), out=totalOut(m), saldo=inc-out;
-    return {key:k, inc, out, saldo};
-  });
-  let best=null, worst=null;
-  const thisYear = new Date().getFullYear().toString();
-  const yearRows = rows.filter(r=>r.key.startsWith(thisYear));
-  if(yearRows.length){ best=yearRows.reduce((a,b)=>b.saldo>a.saldo?b:a); worst=yearRows.reduce((a,b)=>b.saldo<a.saldo?b:a); }
-  return `
-  ${(best&&worst)?`
-  <div class="grid grid-2 section-gap">
-    <div class="card"><h3>🏆 Melhor mês de ${thisYear}</h3><div class="v" style="font-family:var(--font-display);font-size:20px;color:var(--accent)">${monthKeyToLabel(best.key)}</div><div class="small-muted mono">saldo ${fmtBRL(best.saldo)}</div></div>
-    <div class="card"><h3>⚠️ Pior mês de ${thisYear}</h3><div class="v" style="font-family:var(--font-display);font-size:20px;color:var(--red)">${monthKeyToLabel(worst.key)}</div><div class="small-muted mono">saldo ${fmtBRL(worst.saldo)}</div></div>
-  </div>`:''}
-  <div class="card section-gap">
-    <h3>Mês atual <span class="tag">${monthKeyToLabel(DB.currentMonth)}</span>
-      <button class="btn btn-primary" style="margin-left:auto;" onclick="closeMonth()">Fechar mês e iniciar novo →</button>
-    </h3>
-    <p class="small-muted">Ao fechar o mês, o período atual é arquivado no histórico abaixo e um novo mês é iniciado em branco. Essa ação não apaga nada — os lançamentos ficam guardados para consulta.</p>
-  </div>
-  <div class="card">
-    <h3>Histórico de meses fechados <span class="tag">${rows.length}</span></h3>
-    <div class="tablewrap"><table>
-      <thead><tr><th>Mês</th><th>Renda</th><th>Despesas</th><th>Saldo</th><th>Resultado</th></tr></thead>
-      <tbody>
-        ${rows.length? rows.slice().reverse().map(r=>`
-          <tr>
-            <td>${monthKeyToLabel(r.key)}</td>
-            <td class="mono" style="color:var(--accent)">${fmtBRL(r.inc)}</td>
-            <td class="mono" style="color:var(--red)">${fmtBRL(r.out)}</td>
-            <td class="mono">${fmtBRL(r.saldo)}</td>
-            <td><span class="badge ${r.saldo>=0?'bom':'ruim'}">${r.saldo>=0?'Bom':'Ruim'}</span></td>
-          </tr>`).join('') : `<tr class="empty-row"><td colspan="5">Nenhum mês fechado ainda.</td></tr>`}
-      </tbody>
-    </table></div>
-  </div>`;
-}
-function closeMonth(){
-  if(!confirm('Fechar '+monthKeyToLabel(DB.currentMonth)+' e iniciar um novo mês?')) return;
-  DB.months[DB.currentMonth].closed = true;
-  const nk = nextMonthKey(DB.currentMonth);
-  ensureMonth(nk);
-  DB.currentMonth = nk;
-  saveDB();
-  renderSidebar();
-  goTab('historico');
-  toast('Mês fechado. Novo mês iniciado: '+monthKeyToLabel(nk));
-}
-
-/* ---------- CONFIGURAÇÕES ---------- */
-function viewConfig(){
-  return `
-  <div class="grid grid-2">
-    <div class="card">
-      <h3>Categorias de despesa</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
-        ${DB.categories.map(c=>`<span class="cat-chip">${c} <button onclick="removeCategory('${c}')" style="background:none;border:none;color:var(--text-faint);margin-left:4px;cursor:pointer;">✕</button></span>`).join('')}
-      </div>
-      <div style="display:flex;gap:8px;">
-        <input id="newCat" placeholder="Nova categoria" style="flex:1;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;color:var(--text);">
-        <button class="btn btn-ghost" onclick="addCategory()">Adicionar</button>
-      </div>
-    </div>
-    <div class="card">
-      <h3>Segurança</h3>
-      <p class="small-muted section-gap">Altere a senha usada para acessar este site.</p>
-      <div class="field"><label>Nova senha</label><input type="password" id="newPass"></div>
-      <button class="btn btn-ghost btn-block" onclick="changePassword()">Atualizar senha</button>
-    </div>
-  </div>
-  <div class="card" style="margin-top:16px;">
-    <h3>Sincronizar com conta Google <span class="tag">opcional · Firebase</span></h3>
-    <p class="small-muted" style="max-width:640px;">
-      Para acessar os mesmos dados no celular e no computador com sua conta Google, este site usa o
-      <strong>Firebase</strong> (serviço gratuito do Google). Crie um projeto em
-      <span class="mono" style="color:var(--blue)">console.firebase.google.com</span>, ative <em>Authentication → Google</em> e
-      <em>Firestore Database</em>, e cole abaixo a configuração (Project settings → SDK config → "Config").
-      Sem isso, o app continua funcionando normalmente, salvando apenas neste navegador.
-    </p>
-    <div class="field"><label>Configuração do Firebase (JSON)</label>
-      <textarea id="fbConfig" rows="5" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'>${DB.firebase?JSON.stringify(DB.firebase,null,2):''}</textarea>
-    </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn btn-ghost" onclick="saveFirebaseConfig()">Salvar configuração</button>
-      <button class="btn btn-primary" onclick="signInGoogle()">🔗 Entrar com Google</button>
-      ${fbUser?`<span class="badge pago" style="align-self:center;">conectado: ${fbUser.email}</span>`:''}
-    </div>
-  </div>`;
-}
-function addCategory(){
-  const v = document.getElementById('newCat').value.trim();
-  if(!v) return;
-  if(!DB.categories.includes(v)) DB.categories.push(v);
-  saveDB(); renderTab('config'); toast('Categoria adicionada.');
-}
-function removeCategory(c){
-  DB.categories = DB.categories.filter(x=>x!==c);
-  saveDB(); renderTab('config');
-}
-async function changePassword(){
-  const v = document.getElementById('newPass').value;
-  if(v.length<4){ toast('Senha muito curta.'); return; }
-  DB.passwordHash = await sha256(v);
-  saveDB(); toast('Senha atualizada.');
-}
-
-/* ---------- Firebase opcional ---------- */
-function initFirebase(config, skipUI){
-  try{
-    fbApp = firebase.apps.length? firebase.app() : firebase.initializeApp(config);
-    fbAuth = firebase.auth();
-    fbDb = firebase.firestore();
-    fbAuth.onAuthStateChanged(u=>{
-      fbUser = u;
-      if(u){ pullFromCloud(); }
-      if(document.getElementById('content') && currentTab==='config') renderTab('config');
-    });
-  }catch(e){ console.warn('Firebase init falhou', e); }
-}
-function saveFirebaseConfig(){
-  const raw = document.getElementById('fbConfig').value.trim();
-  if(!raw){ DB.firebase=null; saveDB(); toast('Sincronização removida.'); return; }
-  try{
-    const cfg = JSON.parse(raw);
-    DB.firebase = cfg;
-    saveDB();
-    initFirebase(cfg);
-    toast('Configuração salva. Clique em "Entrar com Google".');
-  }catch(e){ toast('JSON inválido.'); }
-}
-function signInGoogle(){
-  if(!fbAuth){ toast('Salve a configuração do Firebase primeiro.'); return; }
-  const provider = new firebase.auth.GoogleAuthProvider();
-  fbAuth.signInWithPopup(provider).then(()=>toast('Conectado com Google.')).catch(e=>toast('Falha ao conectar: '+e.message));
-}
-function syncToCloud(){
-  if(!fbDb || !fbUser) return;
-  const {passwordHash, ...rest} = DB; // não envia hash de senha para a nuvem
-  fbDb.collection('fluxo_users').doc(fbUser.uid).set(rest).catch(e=>console.warn(e));
-}
-function pullFromCloud(){
-  if(!fbDb || !fbUser) return;
-  fbDb.collection('fluxo_users').doc(fbUser.uid).get().then(doc=>{
-    if(doc.exists){
-      const cloud = doc.data();
-      DB = {...DB, ...cloud};
-      ensureMonth(DB.currentMonth);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
-      renderSidebar(); renderTab(currentTab);
-      toast('Dados sincronizados da nuvem.');
-    }
-  }).catch(e=>console.warn(e));
-}
-
-/* ---------- modal helpers ---------- */
-function showModal(html){
-  document.getElementById('modalBox').innerHTML = html;
-  document.getElementById('modalBackdrop').classList.add('open');
-}
-function closeModal(){ document.getElementById('modalBackdrop').classList.remove('open'); }
-document.getElementById('modalBackdrop').addEventListener('click', e=>{ if(e.target.id==='modalBackdrop') closeModal(); });
-
-/* ---------- print / A4 preview ---------- */
-function openPrintPreview(printNow){
-  const m = monthData(DB.currentMonth);
-  const byCat = {};
-  m.expenses.forEach(e=>{ byCat[e.categoria]=byCat[e.categoria]||[]; byCat[e.categoria].push(e); });
-  const billsRows = m.bills.map(b=>`<tr><td>${b.tipoConta}</td><td>${b.fornecedor}</td><td>${fmtDate(b.dataVencimento)}</td><td>${b.situacao}</td><td style="text-align:right">${fmtBRL(b.valor)}</td></tr>`).join('');
-  const catBlocks = Object.keys(byCat).map(cat=>{
-    const items = byCat[cat];
-    const sub = items.reduce((s,i)=>s+Number(i.valor),0);
-    return `<div class="cat-block"><h4>${cat} — ${fmtBRL(sub)}</h4>
-      <table><thead><tr><th>Descrição</th><th>Data</th><th style="text-align:right">Valor</th></tr></thead>
-      <tbody>${items.map(i=>`<tr><td>${i.descricao}</td><td>${fmtDate(i.data)}</td><td style="text-align:right">${fmtBRL(i.valor)}</td></tr>`).join('')}</tbody></table></div>`;
-  }).join('');
-  const totalDespesas = totalOut(m);
-  const totalRenda = totalIncome(m);
-  document.getElementById('printArea').innerHTML = `
-    <div class="print-sheet" id="sheet">
-      <div class="ps-head">
-        <div><h1>Relatório Financeiro</h1><div>${monthKeyToLabel(DB.currentMonth)}</div></div>
-        <small>Gerado em ${new Date().toLocaleDateString('pt-BR')}</small>
-      </div>
-      <p style="font-size:12.5px;color:#555;">Renda do mês: <strong>${fmtBRL(totalRenda)}</strong> &nbsp;·&nbsp; Total de despesas: <strong>${fmtBRL(totalDespesas)}</strong></p>
-      <h4 style="text-transform:uppercase;font-size:12.5px;letter-spacing:.5px;margin:18px 0 8px;">Despesas por categoria</h4>
-      ${catBlocks || '<p style="color:#777;font-size:12.5px;">Nenhuma despesa lançada.</p>'}
-      <h4 style="text-transform:uppercase;font-size:12.5px;letter-spacing:.5px;margin:18px 0 8px;">Contas a pagar</h4>
-      <table><thead><tr><th>Tipo</th><th>Fornecedor</th><th>Vencimento</th><th>Situação</th><th style="text-align:right">Valor</th></tr></thead>
-      <tbody>${billsRows || '<tr><td colspan="5" style="color:#777;">Nenhuma conta cadastrada.</td></tr>'}</tbody></table>
-      <div class="ps-total"><span>Total geral do mês</span><span>${fmtBRL(totalDespesas)}</span></div>
-    </div>`;
-  document.getElementById('printBackdrop').classList.add('open');
-  if(printNow) setTimeout(()=>window.print(), 200);
-}
-function closePrint(){ document.getElementById('printBackdrop').classList.remove('open'); }
-</script>
+<script src="src/config/firebase-config.js"></script>
+<script src="src/js/app.js"></script>
 </body>
 </html>
